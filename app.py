@@ -36,7 +36,7 @@ def atm(h):
         nu = mu / ro
         return t, p, ro, mu, nu, a
     except Exception as e:
-        st.error(f"Ошибка в atm(): {e}")
+        st.error(f"Ошибка в функции atm(): {e}")
         return 216.65, 22632.1, 0.3639, 1.789e-5, 4.917e-5, 295.1
 
 def adh(M, q, omegax, omegay, omegaz, alpha, beta, deltav, deltan, deltae):
@@ -80,7 +80,7 @@ def adh(M, q, omegax, omegay, omegaz, alpha, beta, deltav, deltan, deltae):
         Mz = mz * q * s * l
         return X, Y, Z, Mx, My, Mz
     except Exception as e:
-        st.error(f"Ошибка в adh(): {e}")
+        st.error(f"Ошибка в функции adh(): {e}")
         return 0, 0, 0, 0, 0, 0
 
 def matr(rorg, larg, murg, nurg):
@@ -90,7 +90,7 @@ def matr(rorg, larg, murg, nurg):
     m02 = 2 * (-rorg * murg + larg * nurg)
     m10 = 2 * (-rorg * nurg + larg * murg)
     m11 = rorg**2 + murg**2 - nurg**2 - larg**2
-    m12 = 2 * (rorg * larg + nurg * murg)
+    m12 = 2 * (rorg * larg + murg * nurg)
     m20 = 2 * (rorg * murg + nurg * larg)
     m21 = 2 * (-rorg * larg + nurg * murg)
     m22 = rorg**2 + nurg**2 - larg**2 - murg**2
@@ -120,11 +120,11 @@ with col1:
     N = st.number_input("N", value=9, min_value=0, max_value=100)
     theta_deg = st.number_input("Угол θ (градусы)", value=-41.0, min_value=-89.0, max_value=89.0)
     m = st.number_input("Масса (кг)", value=1242.0, min_value=1.0)
-    v = st.number_input("Начальная скорость (м/с)", value=float(4850 - 5 * N), min_value=0.0)
+    v = st.number_input("Начальная скорость (м/с)", value=440.0, min_value=0.0)
     dt = st.number_input("Шаг времени (с)", value=0.001, min_value=1e-6, format="%.6f")
 with col2:
     dm = st.number_input("Диаметр (м)", value=1.41, min_value=0.01)
-    y0 = st.number_input("Начальная высота (м)", value=float(41000 - 52 * N), min_value=0.0)
+    y0 = st.number_input("Начальная высота (м)", value=40532.0, min_value=0.0)
     K1 = st.number_input("K1", value=-7.0)
     K2 = st.number_input("K2", value=-7.0)
     max_iterations = st.number_input("Макс. итераций", value=1000000, min_value=1000)
@@ -183,13 +183,10 @@ if st.button("Запустить симуляцию"):
         num = 0
         while y >= 0 and num < max_iterations:
             try:
-                if y > 1e6 or v > 1e5:
-                    st.error(f"Прерывание: y={y:.2f} м или v={v:.2f} м/с на итерации {num}")
-                    break
                 A = matr(rorg, larg, murg, nurg)
                 det_A = np.linalg.det(A)
                 if abs(det_A) < 1e-10:
-                    st.error(f"Матрица A плохо обусловлена на итерации {num}, det(A)={det_A}")
+                    st.error(f"Матрица A плохо обусловлена на итерации {num}, det(A)={det_A:.2e}")
                     break
                 wg = np.array([[wxg], [wyg], [wzg]])
                 wsv = np.dot(A, wg)
@@ -197,6 +194,9 @@ if st.button("Запустить симуляцию"):
                 wy = wsv[1, 0]
                 wz = wsv[2, 0]
                 v = ((vx + wx)**2 + (vy + wy)**2 + (vz + wz)**2)**0.5
+                if y > 1e6 or v > 1e5:
+                    st.error(f"Прерывание: y={y:.2f} м или v={v:.2f} м/с на итерации {num}")
+                    break
                 t, p, ro, mu, nu, a = atm(y)
                 M = v / max(a, 1e-10)
                 q = ro * v**2 / 2
@@ -310,14 +310,4 @@ if st.button("Запустить симуляцию"):
         # Сохранение в Excel
         st.subheader("Скачать результаты")
         output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='Параметры', index=False)
-        excel_data = output.getvalue()
-        st.download_button(
-            label="Скачать Excel-файл",
-            data=excel_data,
-            file_name="UTS.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
-        st.success("Симуляция завершена!")
+        with pd.ExcelWriter(output, engine='
