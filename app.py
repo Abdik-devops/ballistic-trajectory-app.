@@ -16,7 +16,7 @@ def atm(h):
     """Расчет параметров атмосферы на заданной высоте"""
     try:
         if h < -2000 or h > 85000:
-            raise ValueError(f"Высота {h} м вне допустимого диапазона [-2000, 85000] м")
+            raise ValueError(f"Высота {h:.2f} м вне допустимого диапазона [-2000, 85000] м")
         hg = Rz * h / (Rz + h)
         H = [-2000, 0, 11000, 20000, 32000, 47000, 51000, 71000, 85000]
         T = [301.15, 288.15, 216.65, 216.65, 228.65, 270.65, 270.65, 214.65, 186.65]
@@ -310,4 +310,17 @@ if st.button("Запустить симуляцию"):
         # Сохранение в Excel
         st.subheader("Скачать результаты")
         output = BytesIO()
-        with pd.ExcelWriter(output, engine='
+        try:
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Параметры', index=False)
+            excel_data = output.getvalue()
+            st.download_button(
+                label="Скачать Excel-файл",
+                data=excel_data,
+                file_name="UTS.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        except Exception as e:
+            st.error(f"Ошибка при сохранении Excel-файла: {e}")
+
+        st.success("Симуляция завершена!")
