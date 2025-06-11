@@ -1,0 +1,12 @@
+name: ballistic-trajectory-app
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - streamlit=1.38.0
+  - openpyxl=3.1.5
+  - numpy=2.1.1
+  - pandas=2.2.3
+  - matplotlib=3.9.2
+  - pip
